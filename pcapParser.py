@@ -5,9 +5,14 @@
 # apt-get install python3 python3-pip
 # pip3 install python-pyshark
 # pip3 install pandas
+# pip3 install plotly
 
 import pyshark
 import pandas as pd
+import numpy
+from matplotlib import pyplot as plt
+import networkx as nx
+
 
 # LIVE CAPTURE (just for doc purposes)
 # liveCap = pyshark.LiveCapture(interface='wlan0')
@@ -15,7 +20,7 @@ import pandas as pd
 # for pkt in liveCap.sniff_continuously(packet_count=5):
 #     print(pkt)
 
-pcap = pyshark.FileCapture("./emotet.pcap")                         # read pcap from file
+pcap = pyshark.FileCapture("./malware.pcap")                         # read pcap from file
 
 print(type(pcap))                                                   # is a pyshark capture file
 #print(pcap[0])                                                     # displays info from 1st packet
@@ -27,7 +32,7 @@ print(type(pcap))                                                   # is a pysha
 # use pandas to create a DF
 # used wiresharks pcap to csv functionality for ease 
 # pyshark cap object --> csv would be a separate project
-df = pd.read_csv('emotet.csv')
+df = pd.read_csv('./malware.csv', delimiter = ',')
 
 # data cleaning
 df = df.iloc[: , 1:]                                                # drop redundant first column of dataframe
@@ -63,14 +68,30 @@ print(df[df['Source'] == top_src]['Source Port'].unique(),"\n\n")
 
 # Unique Source IPs
 print("Unique Source IPs")
-print(df['Source'].unique(),"\n\n")
+uniqueSrcIps = df['Source'].unique()
+print(uniqueSrcIps,"\n\n")
 
-print()
 
 # Unique Destination IP addresses
 print("Unique Destination IP Addresses")
-print(df['Destination'].unique(),"\n\n")
+uniqueDestIps = df['Destination'].unique()
+print(uniqueDestIps, "\n\n")
 
-#group by protocol
+# group by protocol
 groupByProto = df.groupby('Protocol').Source.count()
 print(groupByProto.sort_values())                                   # sort them in number order (instead of alphabetical by protocol)
+
+# visualizing the data
+# crosstab to show frequency of source ip to particular dest port
+data_crosstab = pd.crosstab(df['Source'], df['Dest. Port'])
+print(data_crosstab)
+
+# # display network graph
+# ngdf = pd.concat(df['Source'], df["Destination"], keys = ['Source', 'Destination']) #not quite right
+
+# netgraph = nx.Graph()
+# netgraph.add_nodes_from(ngdf.Source.unique()) # add source IPs
+# netgraph.add_nodes_from(ngdf.Destination.unique()) #add destination IPs
+# netgraph.add_edges_from(ngdf.valuess) #add all edges
+# nx.draw(netgraph, with_labels=True)
+# plt.show()
